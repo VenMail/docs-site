@@ -1,41 +1,42 @@
 /*
  * Venmail brand theme for Starlight
  * Brand primary: #FF5C39 (orange)
- * Dark bg matches landing footer: #0B1624
  *
- * IMPORTANT: Starlight dark mode semantics (reversed from light):
- *   white  = page bg (DARKEST surface)
- *   black  = strongest text (LIGHTEST color)
- *   gray-1 = headings, strong emphasis
- *   gray-2 = DEFAULT BODY TEXT — must be very readable
+ * Starlight gray scale usage (BOTH modes):
+ *   white  = page background
+ *   black  = highest-contrast text (headings)
+ *   gray-1 = lightest gray (subtle bg tints)
+ *   gray-2 = body text (DEFAULT — must be highly readable!)
  *   gray-3 = secondary/muted text
- *   gray-4 = borders, UI chrome
- *   gray-5 = card/surface backgrounds
- *   gray-6 = nav/sidebar backgrounds
+ *   gray-4 = borders, dividers
+ *   gray-5 = surfaces (cards, code bg)
+ *   gray-6 = nav/sidebar bg
+ *   gray-7 = subtle page bg tint
  *
- * The most critical for contrast: gray-2 on white (body text on page bg)
+ * LIGHT MODE: white=#fff, black=near-black, gray-2=dark readable text
+ * DARK MODE:  white=dark bg, black=near-white, gray-2=light readable text
  */
 
 /* ── Light mode ──────────────────────────────── */
 :root {
   --sl-color-accent-low: #fff1ec;
-  --sl-color-accent: #d4431e;
-  --sl-color-accent-high: #7c2512;
+  --sl-color-accent: #c93d1a;
+  --sl-color-accent-high: #862910;
 
   --sl-color-white: #ffffff;
-  --sl-color-gray-1: #f4f4f5;
-  --sl-color-gray-2: #b0b3ba;
-  --sl-color-gray-3: #7c7f88;
-  --sl-color-gray-4: #53565e;
-  --sl-color-gray-5: #2d3039;
-  --sl-color-gray-6: #1d2028;
-  --sl-color-gray-7: #fafafa;
-  --sl-color-black: #12141c;
+  --sl-color-gray-1: #f5f6f8;
+  --sl-color-gray-2: #3b3f4a;
+  --sl-color-gray-3: #585d6a;
+  --sl-color-gray-4: #b0b5c0;
+  --sl-color-gray-5: #e8eaee;
+  --sl-color-gray-6: #f0f1f4;
+  --sl-color-gray-7: #fafbfc;
+  --sl-color-black: #181b24;
 
   --sl-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* ── Dark mode — maximum readability ─────────── */
+/* ── Dark mode ───────────────────────────────── */
 :root[data-theme='dark'] {
   --sl-color-accent-low: #321a10;
   --sl-color-accent: #ff8c6b;
@@ -43,54 +44,15 @@
 
   --sl-color-white: #0c1219;
   --sl-color-gray-1: #eef0f6;
-  --sl-color-gray-2: #d0d4de;
-  --sl-color-gray-3: #9299a8;
-  --sl-color-gray-4: #4d5568;
-  --sl-color-gray-5: #1c2333;
-  --sl-color-gray-6: #131926;
+  --sl-color-gray-2: #cdd1dc;
+  --sl-color-gray-3: #8c93a4;
+  --sl-color-gray-4: #3a4258;
+  --sl-color-gray-5: #192030;
+  --sl-color-gray-6: #111828;
   --sl-color-black: #f5f7fb;
 }
 
-/* ── Force high-contrast text everywhere in dark mode ── */
-:root[data-theme='dark'] {
-  --sl-color-text: #d0d4de;
-  --sl-color-text-accent: #ffe0d4;
-}
-
-/* Headings should be near-white */
-:root[data-theme='dark'] h1,
-:root[data-theme='dark'] h2,
-:root[data-theme='dark'] h3,
-:root[data-theme='dark'] h4 {
-  color: #f5f7fb !important;
-}
-
-/* Body paragraphs, list items — bright enough to read easily */
-:root[data-theme='dark'] .sl-markdown-content p,
-:root[data-theme='dark'] .sl-markdown-content li,
-:root[data-theme='dark'] .sl-markdown-content td,
-:root[data-theme='dark'] .sl-markdown-content dd {
-  color: #d0d4de;
-}
-
-/* Sidebar nav items */
-:root[data-theme='dark'] nav.sidebar-content a,
-:root[data-theme='dark'] [data-scope="sidebar"] a {
-  color: #b8bcc8;
-}
-:root[data-theme='dark'] nav a[aria-current='page'],
-:root[data-theme='dark'] [data-scope="sidebar"] a[aria-current='page'] {
-  color: #ffe0d4 !important;
-  font-weight: 600;
-}
-
-/* Sidebar group headings */
-:root[data-theme='dark'] .sidebar-content summary,
-:root[data-theme='dark'] [data-scope="sidebar"] summary {
-  color: #eef0f6;
-}
-
-/* ── Hero buttons ────────────────────────────── */
+/* ── Hero ────────────────────────────────────── */
 .hero .action.primary {
   background: #FF5C39 !important;
   border-color: #FF5C39 !important;
@@ -100,112 +62,201 @@
   background: #e04b28 !important;
   border-color: #e04b28 !important;
 }
-/* Hero tagline */
-:root[data-theme='dark'] .hero .tagline {
-  color: #d0d4de !important;
+
+/* ── Light mode explicit overrides ───────────── */
+
+/* Body text must be dark and readable on white */
+:root:not([data-theme='dark']) .sl-markdown-content p,
+:root:not([data-theme='dark']) .sl-markdown-content li,
+:root:not([data-theme='dark']) .sl-markdown-content td,
+:root:not([data-theme='dark']) .sl-markdown-content dd,
+:root:not([data-theme='dark']) .sl-markdown-content dt {
+  color: #3b3f4a;
 }
 
-/* ── Links should be bright and obvious ──────── */
+/* Light mode headings — near-black */
+:root:not([data-theme='dark']) h1,
+:root:not([data-theme='dark']) h2,
+:root:not([data-theme='dark']) h3,
+:root:not([data-theme='dark']) h4 {
+  color: #181b24 !important;
+}
+
+/* Light mode hero tagline */
+:root:not([data-theme='dark']) .hero .tagline {
+  color: #3b3f4a !important;
+}
+
+/* Light mode table text */
+:root:not([data-theme='dark']) table th {
+  color: #181b24;
+  background: #f0f1f4;
+}
+:root:not([data-theme='dark']) table td {
+  color: #3b3f4a;
+}
+
+/* Light mode sidebar */
+:root:not([data-theme='dark']) nav a {
+  color: #3b3f4a;
+}
+:root:not([data-theme='dark']) nav a[aria-current='page'] {
+  color: #c93d1a !important;
+  font-weight: 600;
+}
+
+/* Light mode secondary text (table of contents, descriptions) */
+:root:not([data-theme='dark']) .right-sidebar a,
+:root:not([data-theme='dark']) starlight-toc a {
+  color: #585d6a;
+}
+:root:not([data-theme='dark']) starlight-toc a[aria-current='true'] {
+  color: #c93d1a;
+}
+
+/* Light mode cards */
+:root:not([data-theme='dark']) .card {
+  border-color: #e0e2e8;
+}
+:root:not([data-theme='dark']) .card:hover {
+  border-color: #FF5C39;
+}
+
+/* Light mode pagination */
+:root:not([data-theme='dark']) .pagination-links a {
+  border-color: #e0e2e8;
+  color: #3b3f4a;
+}
+:root:not([data-theme='dark']) .pagination-links a .link-title {
+  color: #181b24;
+}
+
+/* ── Dark mode explicit overrides ────────────── */
+
+/* Headings near-white */
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2,
+:root[data-theme='dark'] h3,
+:root[data-theme='dark'] h4 {
+  color: #f5f7fb !important;
+}
+
+/* Body text bright */
+:root[data-theme='dark'] .sl-markdown-content p,
+:root[data-theme='dark'] .sl-markdown-content li,
+:root[data-theme='dark'] .sl-markdown-content td,
+:root[data-theme='dark'] .sl-markdown-content dd {
+  color: #cdd1dc;
+}
+
+/* Hero tagline */
+:root[data-theme='dark'] .hero .tagline {
+  color: #cdd1dc !important;
+}
+
+/* Links bright orange */
 :root[data-theme='dark'] .sl-markdown-content a:not(.action) {
   color: #ff8c6b;
 }
-:root[data-theme='dark'] .sl-markdown-content a:not(.action):hover {
-  color: #ffb89e;
+
+/* Sidebar */
+:root[data-theme='dark'] nav a {
+  color: #a8aebe;
+}
+:root[data-theme='dark'] nav a[aria-current='page'] {
+  color: #ffe0d4 !important;
+  font-weight: 600;
 }
 
-/* ── Code blocks ─────────────────────────────── */
+/* Code blocks */
 :root[data-theme='dark'] .expressive-code pre {
   background: #0f1724 !important;
 }
 :root[data-theme='dark'] .expressive-code .frame {
-  border-color: #2a3348 !important;
+  border-color: #253045 !important;
 }
 
-/* ── Inline code ─────────────────────────────── */
+/* Inline code */
 :root[data-theme='dark'] :not(pre) > code {
-  background: #1c2333;
+  background: #192030;
   color: #eef0f6;
-  padding: 0.125em 0.3em;
-  border-radius: 0.25em;
+}
+:root:not([data-theme='dark']) :not(pre) > code {
+  background: #f0f1f4;
+  color: #3b3f4a;
 }
 
-/* ── Tables ──────────────────────────────────── */
+/* Tables */
 :root[data-theme='dark'] table th {
   color: #f5f7fb;
-  background: #1c2333;
-  font-weight: 600;
+  background: #192030;
 }
 :root[data-theme='dark'] table td {
-  color: #d0d4de;
+  color: #cdd1dc;
 }
 :root[data-theme='dark'] table tr {
-  border-color: #2a3348;
+  border-color: #253045;
 }
 :root[data-theme='dark'] table tr:nth-child(2n) {
-  background: rgba(28, 35, 51, 0.5);
+  background: rgba(25, 32, 48, 0.5);
 }
 
-/* ── Cards ───────────────────────────────────── */
+/* Cards */
 :root[data-theme='dark'] .card {
-  border-color: #2a3348;
-  background: #131926;
+  border-color: #253045;
+  background: #111828;
 }
 :root[data-theme='dark'] .card:hover {
   border-color: #ff8c6b;
 }
-:root[data-theme='dark'] .card .card__title {
-  color: #f5f7fb;
-}
-:root[data-theme='dark'] .card .card__body {
-  color: #b8bcc8;
-}
 
-/* ── Aside/callout boxes ─────────────────────── */
+/* Asides */
 :root[data-theme='dark'] .starlight-aside {
-  border-color: #2a3348;
-  background: rgba(28, 35, 51, 0.6);
+  border-color: #253045;
 }
 :root[data-theme='dark'] .starlight-aside .starlight-aside__title {
   color: #f5f7fb;
 }
 :root[data-theme='dark'] .starlight-aside p {
-  color: #d0d4de;
+  color: #cdd1dc;
 }
 
-/* ── Footer/pagination links ─────────────────── */
+/* Pagination */
 :root[data-theme='dark'] .pagination-links a {
-  border-color: #2a3348;
-  color: #d0d4de;
+  border-color: #253045;
+  color: #cdd1dc;
 }
 :root[data-theme='dark'] .pagination-links a:hover {
   border-color: #ff8c6b;
+}
+:root[data-theme='dark'] .pagination-links a .link-title {
   color: #f5f7fb;
 }
 
-/* ── Search dialog ───────────────────────────── */
+/* Search */
 :root[data-theme='dark'] dialog {
-  background: #131926;
-  color: #d0d4de;
+  background: #111828;
+  color: #cdd1dc;
 }
 
-/* ── Tabs ────────────────────────────────────── */
+/* Tabs */
 :root[data-theme='dark'] starlight-tabs [role="tab"] {
-  color: #9299a8;
+  color: #8c93a4;
 }
 :root[data-theme='dark'] starlight-tabs [role="tab"][aria-selected="true"] {
   color: #ffe0d4;
   border-color: #ff8c6b;
 }
 
-/* ── Steps ───────────────────────────────────── */
+/* Steps */
 :root[data-theme='dark'] .sl-steps > li::before {
   background: #ff8c6b;
   color: #0c1219;
 }
 
-/* ── Header/top nav ──────────────────────────── */
+/* Header */
 :root[data-theme='dark'] header.header {
-  border-color: #1c2333;
+  border-color: #192030;
 }
 
 /* ── API endpoint badges ─────────────────────── */
