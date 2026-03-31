@@ -1,0 +1,122 @@
+---
+title: Key Management
+description: Generate, publish, rotate, and revoke VVS-1 agent keys.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+## Generate a keypair
+
+<Tabs>
+  <TabItem label="Node.js">
+  ```javascript
+  import { vvs } from '@venmail/vsm';
+
+  const keyPair = vvs.generateKeyPair();
+
+  console.log('Public key (base64url):', keyPair.publicKeyBase64url);
+  console.log('Private key length:', keyPair.privateKey.length); // DER-encoded
+
+  // Store privateKey securely (e.g., environment variable, vault)
+  // Publish publicKeyBase64url via well-known or DNS
+  ```
+  </TabItem>
+  <TabItem label="PHP">
+  ```php
+  use Venmail\VVS\KeyGenerator;
+
+  $keyPair = KeyGenerator::generate();
+
+  echo $keyPair->publicKeyBase64url; // Publish this
+  // Store $keyPair->privateKey securely
+  ```
+  </TabItem>
+</Tabs>
+
+## Publishing your public key
+
+### Method 1: Well-known endpoint (recommended)
+
+Serve a JSON response at:
+```
+GET https://yourdomain.com/.well-known/venmail-agent/{agent-name}
+```
+
+Response:
+```json
+{
+  "agent_id": "billing@yourdomain.com",
+  "public_key": "MCowBQYDK2VwAyEA...",
+  "key_version": 1,
+  "status": "active",
+  "algorithm": "ed25519"
+}
+```
+
+The SDKs include middleware to serve this automatically:
+
+```javascript
+import { venmailWellKnown } from '@venmail/vsm';
+
+app.use(venmailWellKnown(async (agentName) => {
+  const key = await db.getAgentKey(agentName);
+  if (!key) return null;
+  return {
+    agent_id: `${agentName}@yourdomain.com`,
+    public_key: key.publicKeyBase64url,
+    key_version: key.version,
+    status: 'active',
+    algorithm: 'ed25519',
+  };
+}));
+```
+
+### Method 2: DNS TXT record
+
+Add a TXT record on `_venmail.yourdomain.com`:
+
+```
+v=VVS1; agent=billing; pubkey=MCowBQYDK2VwAyEA...; kv=1; status=active
+```
+
+Generate the record with the SDK:
+
+```javascript
+import { generateDnsRecord } from '@venmail/vsm';
+
+const record = generateDnsRecord('billing', keyPair.publicKeyBase64url, 1);
+// "v=VVS1; agent=billing; pubkey=MCowBQYDK2VwAyEA...; kv=1; status=active"
+```
+
+### Method 3: Embedded header (bootstrapping only)
+
+Include the public key directly in the email via `X-Venmail-Public-Key`. This is lowest trust — use only when well-known/DNS aren't yet propagated.
+
+<Aside type="caution">
+Receivers assign `PARTIAL` trust to embedded-only verification. Always publish via well-known or DNS for production use.
+</Aside>
+
+## Key rotation
+
+1. Generate a new keypair with an incremented `key_version`
+2. Publish the new key at well-known/DNS **at least 24 hours** before retiring the old key
+3. Start signing with the new key
+4. Keep the old key resolvable for up to 7 days for messages in transit
+5. Set old key status to `rotated`
+
+## Key revocation
+
+Set `status: "revoked"` in your well-known response or DNS record. This takes effect immediately for any receiver that resolves the key after that point.
+
+```json
+{
+  "agent_id": "billing@yourdomain.com",
+  "public_key": "MCowBQYDK2VwAyEA...",
+  "key_version": 1,
+  "status": "revoked"
+}
+```
+
+<Aside type="tip">
+Receivers cache key resolution results for up to 5 minutes. Revocation propagates within that window.
+</Aside>

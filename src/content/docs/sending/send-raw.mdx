@@ -1,0 +1,62 @@
+---
+title: Send Raw RFC2822
+description: Send a pre-formatted RFC2822 email message.
+---
+
+## POST /api/v1/send/raw
+
+Send a pre-built RFC2822 message directly. This is similar to sending via SMTP and gives you full control over message formatting.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `mail_from` | `string` | Yes | Envelope sender address |
+| `rcpt_to` | `string[]` | Yes | Envelope recipient addresses |
+| `data` | `string` | Yes | Base64-encoded RFC2822 message |
+| `bounce` | `boolean` | No | Whether this is a bounce message |
+
+### Example
+
+```bash
+# First, base64 encode your RFC2822 message
+MESSAGE=$(cat <<'EOF' | base64 -w 0
+From: sender@yourdomain.com
+To: recipient@example.com
+Subject: Raw message test
+Content-Type: text/plain; charset=utf-8
+
+This is a raw RFC2822 message sent via Venmail.
+EOF
+)
+
+curl -X POST https://m.venmail.io/api/v1/send/raw \
+  -H "X-Server-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"mail_from\": \"sender@yourdomain.com\",
+    \"rcpt_to\": [\"recipient@example.com\"],
+    \"data\": \"$MESSAGE\"
+  }"
+```
+
+### Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "message_id": "msg_xyz789@yourdomain.com",
+    "messages": {
+      "recipient@example.com": { "id": 2001, "token": "xyz789" }
+    }
+  }
+}
+```
+
+### When to use raw sending
+
+- Migrating from another email provider with pre-formatted messages
+- Using a mail library (like Nodemailer) that produces RFC2822 output
+- Sending messages with complex MIME structures
+- Forwarding messages with original formatting preserved

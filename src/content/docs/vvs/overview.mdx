@@ -1,0 +1,64 @@
+---
+title: VVS-1 Overview
+description: The Venmail Verification Standard — cryptographic trust for agent email.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## What is VVS-1?
+
+**VVS-1** (Venmail Verification Standard, version 1) adds verifiable, agent-scoped identity and message integrity to email. It uses Ed25519 signatures, standard SMTP headers, and existing DNS/HTTPS infrastructure.
+
+VVS-1 does **not** modify SMTP. It layers trust on top of delivery — receivers that don't support VVS-1 deliver messages normally.
+
+## Why?
+
+Email has no native way to verify that a message from `billing@company.com` was actually sent by the billing system (and not spoofed, injected, or tampered with). DKIM proves the domain sent it. VVS-1 proves which **agent** sent it and that the body hasn't been modified.
+
+This matters for:
+- **AI agents** sending emails on behalf of users or systems
+- **Automated workflows** where message authenticity is critical
+- **Financial communications** that must be tamper-evident
+- **Cross-organization** agent-to-agent communication
+
+## How it works
+
+### Sender side
+
+1. Each agent gets an **Ed25519 keypair**
+2. The public key is published at `/.well-known/venmail-agent/{name}` or via DNS
+3. When sending, the agent signs the message body + headers
+4. VVS headers are added to the email before DKIM signing
+
+### Receiver side
+
+1. Extract `X-Venmail-*` headers from the incoming message
+2. Resolve the sender's public key via well-known, DNS, or embedded header
+3. Verify the Ed25519 signature against the message content
+4. Assign a **trust level**: VERIFIED, PARTIAL, FAILED, or UNKNOWN
+
+<Aside type="tip">
+VVS-1 verification is done automatically by Venmail on incoming mail. The trust level appears as a badge in the Venmail inbox UI.
+</Aside>
+
+## Trust levels
+
+| Level | Meaning |
+|-------|---------|
+| **VERIFIED** | Signature valid, key resolved via `.well-known` or DNS |
+| **PARTIAL** | Signature valid, key from embedded header only |
+| **FAILED** | Headers present but verification failed |
+| **UNKNOWN** | No VVS headers — normal email |
+
+## Backward compatibility
+
+- Messages without VVS headers are delivered normally
+- VVS verification never blocks SMTP delivery
+- Trust levels are annotations, not gatekeepers
+
+## What's next
+
+- [Sign messages](/vvs/signing/) with your agent's Ed25519 key
+- [Verify messages](/vvs/verification/) on the receiving end
+- [Manage keys](/vvs/key-management/) — generation, rotation, revocation
+- [Header reference](/vvs/reference/) — full specification of all VVS headers

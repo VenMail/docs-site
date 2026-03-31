@@ -1,0 +1,80 @@
+---
+title: Domains API
+description: Manage sending domains and DNS verification.
+---
+
+## POST /api/v1/domains/list
+
+List all domains configured for the authenticated server.
+
+### Response
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "uuid": "dom-abc-123",
+      "name": "yourdomain.com",
+      "spf_status": "OK",
+      "dkim_status": "OK",
+      "mx_status": "OK",
+      "return_path_status": "OK",
+      "created_at": "2026-01-15T12:00:00Z"
+    }
+  ]
+}
+```
+
+## POST /api/v1/domains/create
+
+Add a new sending domain.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | `string` | Yes | Domain name (e.g., `yourdomain.com`) |
+
+### Response
+
+Returns the domain record with DNS records to configure.
+
+## POST /api/v1/domains/check
+
+Verify DNS configuration for a domain.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `integer` | Yes | Domain ID |
+
+### Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "spf_status": "OK",
+    "spf_error": null,
+    "dkim_status": "OK",
+    "dkim_error": null,
+    "mx_status": "Missing",
+    "mx_error": "No MX record found pointing to postal server",
+    "return_path_status": "OK",
+    "return_path_error": null
+  }
+}
+```
+
+## POST /api/v1/domains/delete
+
+Remove a domain from the server.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `integer` | Yes | Domain ID |

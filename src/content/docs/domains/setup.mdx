@@ -1,0 +1,62 @@
+---
+title: Domain DNS Setup
+description: Configure DNS records for your sending domain.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## Required DNS records
+
+To send email from your domain via Venmail, configure these DNS records:
+
+<Steps>
+
+1. **SPF Record**
+
+   Add a TXT record on your root domain:
+   ```
+   v=spf1 a mx include:spf.venmail.io ~all
+   ```
+
+2. **DKIM Record**
+
+   Add a TXT record on `venmail._domainkey.yourdomain.com`:
+   ```
+   v=DKIM1; t=s; h=sha256; p=MIGfMA0GCSqGSIb3DQEB...
+   ```
+   The exact value is shown in your Venmail dashboard after adding the domain.
+
+3. **Return Path (CNAME)**
+
+   Add a CNAME record on `rp.yourdomain.com`:
+   ```
+   rp.yourdomain.com CNAME rp.venmail.io
+   ```
+
+4. **MX Record** (for receiving)
+
+   If you want to receive mail through Venmail, add MX records:
+   ```
+   yourdomain.com MX 10 mx1.venmail.io
+   yourdomain.com MX 20 mx2.venmail.io
+   ```
+
+</Steps>
+
+## VVS-1 DNS Record (optional)
+
+To publish VVS-1 agent keys via DNS, add a TXT record on `_venmail.yourdomain.com`:
+
+```
+v=VVS1; agent=billing; pubkey=MCowBQYDK2VwAyEA...; kv=1; status=active
+```
+
+See [VVS-1 Key Management](/vvs/key-management/) for details.
+
+<Aside type="tip">
+DNS changes can take up to 48 hours to propagate, though most providers update within minutes. Use `dig` or an online DNS checker to verify.
+</Aside>
+
+## Verification
+
+After adding DNS records, verify them in the Venmail dashboard or via the [Domains API](/api-reference/domains/). All four checks (SPF, DKIM, Return Path, MX) should show "OK" status.

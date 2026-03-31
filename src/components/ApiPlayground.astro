@@ -1,0 +1,465 @@
+---
+// Interactive API playground with "Login with Venmail" OAuth
+interface Props {
+  method?: string;
+  endpoint?: string;
+  defaultBody?: string;
+}
+
+const { method = 'POST', endpoint = '/api/v1/send/message', defaultBody = '' } = Astro.props;
+---
+
+<div class="api-playground" data-method={method} data-endpoint={endpoint}>
+  <!-- Auth bar -->
+  <div class="ap-auth">
+    <div class="ap-auth-status">
+      <span class="ap-dot ap-dot-off"></span>
+      <span class="ap-auth-text">Not authenticated</span>
+    </div>
+    <button class="ap-login-btn" type="button">
+      <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 6L16 26L28 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Login with Venmail
+    </button>
+  </div>
+
+  <!-- Request builder -->
+  <div class="ap-request">
+    <div class="ap-method-bar">
+      <span class={`ap-method ap-method-${method.toLowerCase()}`}>{method}</span>
+      <input class="ap-url" type="text" value={`https://m.venmail.io${endpoint}`} readonly />
+      <button class="ap-send-btn" type="button">Send</button>
+    </div>
+
+    <div class="ap-tabs">
+      <button class="ap-tab ap-tab-active" data-tab="body" type="button">Body</button>
+      <button class="ap-tab" data-tab="headers" type="button">Headers</button>
+      <button class="ap-tab" data-tab="curl" type="button">cURL</button>
+    </div>
+
+    <div class="ap-panel ap-panel-body ap-panel-active">
+      <textarea class="ap-body" rows="10" spellcheck="false">{defaultBody || `{
+  "to": ["user@example.com"],
+  "from": "hello@yourdomain.com",
+  "subject": "Test email",
+  "html_body": "<p>Hello from Venmail API!</p>"
+}`}</textarea>
+    </div>
+
+    <div class="ap-panel ap-panel-headers">
+      <div class="ap-header-row">
+        <span class="ap-header-key">X-Server-API-Key</span>
+        <input class="ap-header-val ap-apikey-input" type="password" placeholder="Your API key (login to auto-fill)" />
+        <button class="ap-reveal-btn" type="button" title="Show/hide">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div class="ap-header-row">
+        <span class="ap-header-key">Content-Type</span>
+        <input class="ap-header-val" type="text" value="application/json" readonly />
+      </div>
+    </div>
+
+    <div class="ap-panel ap-panel-curl">
+      <pre class="ap-curl-output"><code></code></pre>
+      <button class="ap-copy-btn" type="button">Copy</button>
+    </div>
+  </div>
+
+  <!-- Response -->
+  <div class="ap-response" style="display:none">
+    <div class="ap-response-bar">
+      <span class="ap-response-label">Response</span>
+      <span class="ap-response-status"></span>
+      <span class="ap-response-time"></span>
+    </div>
+    <pre class="ap-response-body"><code></code></pre>
+  </div>
+</div>
+
+<style>
+  .api-playground {
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  /* Auth bar */
+  .ap-auth {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--sl-color-gray-6);
+    border-bottom: 1px solid var(--sl-color-gray-4);
+  }
+  .ap-auth-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--sl-color-gray-2);
+  }
+  .ap-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ap-dot-off { background: var(--sl-color-gray-3); }
+  .ap-dot-on { background: #22c55e; }
+  .ap-login-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--sl-color-gray-4);
+    background: transparent;
+    color: var(--sl-color-gray-1);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ap-login-btn:hover {
+    background: var(--sl-color-accent-low);
+    border-color: var(--sl-color-accent);
+    color: var(--sl-color-accent-high);
+  }
+  .ap-login-btn.ap-authed {
+    border-color: #22c55e;
+    color: #22c55e;
+  }
+
+  /* Method bar */
+  .ap-method-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--sl-color-gray-5);
+  }
+  .ap-method {
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: monospace;
+  }
+  .ap-method-post { background: #dbeafe; color: #2563eb; }
+  .ap-method-get { background: #dcfce7; color: #16a34a; }
+  .ap-method-put { background: #fef3c7; color: #d97706; }
+  .ap-method-delete { background: #fee2e2; color: #dc2626; }
+  :root[data-theme='dark'] .ap-method-post { background: #1e3a5f; color: #93c5fd; }
+  :root[data-theme='dark'] .ap-method-get { background: #14532d; color: #86efac; }
+  .ap-url {
+    flex: 1;
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--sl-color-gray-4);
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-gray-1);
+    font-size: 0.8125rem;
+    font-family: monospace;
+  }
+  .ap-send-btn {
+    padding: 0.375rem 1rem;
+    border-radius: 0.375rem;
+    border: none;
+    background: #FF5C39;
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .ap-send-btn:hover { background: #e04b28; }
+  .ap-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Tabs */
+  .ap-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--sl-color-gray-4);
+    background: var(--sl-color-gray-6);
+  }
+  .ap-tab {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--sl-color-gray-2);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .ap-tab:hover { color: var(--sl-color-gray-1); }
+  .ap-tab-active {
+    color: var(--sl-color-accent-high) !important;
+    border-bottom-color: var(--sl-color-accent) !important;
+  }
+
+  /* Panels */
+  .ap-panel { display: none; padding: 0; }
+  .ap-panel-active { display: block; }
+  .ap-body {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-gray-1);
+    font-family: monospace;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .ap-body:focus { outline: 1px solid var(--sl-color-accent); }
+
+  /* Headers panel */
+  .ap-panel-headers { padding: 0.75rem 1rem; background: var(--sl-color-gray-6); }
+  .ap-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0;
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+  .ap-header-key {
+    min-width: 140px;
+    font-family: monospace;
+    font-size: 0.8125rem;
+    color: var(--sl-color-accent-high);
+    font-weight: 500;
+  }
+  .ap-header-val {
+    flex: 1;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 0.25rem;
+    background: var(--sl-color-gray-5);
+    color: var(--sl-color-gray-1);
+    font-family: monospace;
+    font-size: 0.8125rem;
+  }
+  .ap-reveal-btn {
+    background: none;
+    border: none;
+    color: var(--sl-color-gray-3);
+    cursor: pointer;
+    padding: 0.25rem;
+  }
+
+  /* cURL panel */
+  .ap-panel-curl { position: relative; background: var(--sl-color-gray-6); }
+  .ap-curl-output {
+    padding: 1rem;
+    margin: 0;
+    font-size: 0.8125rem;
+    overflow-x: auto;
+    color: var(--sl-color-gray-1);
+  }
+  .ap-copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--sl-color-gray-4);
+    background: var(--sl-color-gray-5);
+    color: var(--sl-color-gray-2);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  /* Response */
+  .ap-response-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    background: var(--sl-color-gray-5);
+    border-top: 1px solid var(--sl-color-gray-4);
+  }
+  .ap-response-label { font-size: 0.8125rem; font-weight: 600; color: var(--sl-color-gray-1); }
+  .ap-response-status { font-size: 0.75rem; font-family: monospace; font-weight: 700; }
+  .ap-response-status.ok { color: #22c55e; }
+  .ap-response-status.err { color: #ef4444; }
+  .ap-response-time { font-size: 0.75rem; color: var(--sl-color-gray-3); }
+  .ap-response-body {
+    padding: 1rem;
+    margin: 0;
+    background: var(--sl-color-gray-6);
+    font-size: 0.8125rem;
+    overflow-x: auto;
+    color: var(--sl-color-gray-1);
+    max-height: 300px;
+    overflow-y: auto;
+  }
+</style>
+
+<script>
+  // API Playground interactive logic
+  document.querySelectorAll('.api-playground').forEach((pg) => {
+    const AUTH_URL = 'https://m.venmail.io/auth/oauth';
+    // The callback page must be registered in VENIA_OAUTH_ALLOWED_REDIRECTS on the server
+    const CALLBACK_URL = `${window.location.origin}/oauth/callback`;
+
+    const loginBtn = pg.querySelector('.ap-login-btn');
+    const authDot = pg.querySelector('.ap-dot');
+    const authText = pg.querySelector('.ap-auth-text');
+    const apiKeyInput = pg.querySelector('.ap-apikey-input') as HTMLInputElement;
+    const sendBtn = pg.querySelector('.ap-send-btn');
+    const bodyEl = pg.querySelector('.ap-body') as HTMLTextAreaElement;
+    const urlEl = pg.querySelector('.ap-url') as HTMLInputElement;
+    const responseEl = pg.querySelector('.ap-response') as HTMLElement;
+    const responseStatus = pg.querySelector('.ap-response-status');
+    const responseTime = pg.querySelector('.ap-response-time');
+    const responseBody = pg.querySelector('.ap-response-body code');
+    const curlOutput = pg.querySelector('.ap-curl-output code');
+    const copyBtn = pg.querySelector('.ap-copy-btn');
+    const revealBtn = pg.querySelector('.ap-reveal-btn');
+    const tabs = pg.querySelectorAll('.ap-tab');
+    const panels = pg.querySelectorAll('.ap-panel');
+    const method = pg.getAttribute('data-method') || 'POST';
+
+    // Check stored auth
+    const storedKey = localStorage.getItem('venmail_docs_apikey');
+    if (storedKey) {
+      apiKeyInput.value = storedKey;
+      setAuthed(true);
+    }
+
+    function setAuthed(yes: boolean) {
+      authDot?.classList.toggle('ap-dot-on', yes);
+      authDot?.classList.toggle('ap-dot-off', !yes);
+      if (authText) authText.textContent = yes ? 'Authenticated' : 'Not authenticated';
+      loginBtn?.classList.toggle('ap-authed', yes);
+      if (loginBtn && yes) {
+        loginBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Connected';
+      }
+    }
+
+    // Login with Venmail
+    loginBtn?.addEventListener('click', () => {
+      const existing = localStorage.getItem('venmail_docs_apikey');
+      if (existing) {
+        // Already have a key — let them update it
+        const key = prompt('Update your Venmail API key:', existing);
+        if (key && key.trim()) {
+          localStorage.setItem('venmail_docs_apikey', key.trim());
+          apiKeyInput.value = key.trim();
+          setAuthed(true);
+        } else if (key === '') {
+          // Clear key
+          localStorage.removeItem('venmail_docs_apikey');
+          apiKeyInput.value = '';
+          setAuthed(false);
+        }
+        return;
+      }
+
+      // Store current page so callback redirects back here
+      localStorage.setItem('venmail_docs_redirect', window.location.pathname);
+
+      // Redirect to Venmail OAuth with the /oauth/callback as redirect_uri
+      const redirectUri = encodeURIComponent(CALLBACK_URL);
+      const returnPath = encodeURIComponent(window.location.pathname);
+      window.location.href = `${AUTH_URL}?redirect_uri=${redirectUri}&redirect=${returnPath}`;
+    });
+
+    // Tabs
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('ap-tab-active'));
+        tab.classList.add('ap-tab-active');
+        const target = (tab as HTMLElement).dataset.tab;
+        panels.forEach((p) => {
+          p.classList.toggle('ap-panel-active', p.classList.contains(`ap-panel-${target}`));
+        });
+        if (target === 'curl') updateCurl();
+      });
+    });
+
+    // Reveal API key
+    revealBtn?.addEventListener('click', () => {
+      apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+    });
+
+    // Generate cURL
+    function updateCurl() {
+      const key = apiKeyInput?.value || 'YOUR_API_KEY';
+      const url = urlEl?.value || '';
+      const body = bodyEl?.value || '';
+      let curl = `curl -X ${method} '${url}' \\\n  -H 'X-Server-API-Key: ${key}' \\\n  -H 'Content-Type: application/json'`;
+      if (method !== 'GET' && body.trim()) {
+        curl += ` \\\n  -d '${body.replace(/'/g, "\\'")}'`;
+      }
+      if (curlOutput) curlOutput.textContent = curl;
+    }
+
+    // Copy cURL
+    copyBtn?.addEventListener('click', () => {
+      const text = curlOutput?.textContent || '';
+      navigator.clipboard.writeText(text).then(() => {
+        if (copyBtn) { copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500); }
+      });
+    });
+
+    // Send request
+    sendBtn?.addEventListener('click', async () => {
+      const key = apiKeyInput?.value;
+      if (!key) {
+        alert('Please enter your API key or login with Venmail first.');
+        return;
+      }
+      (sendBtn as HTMLButtonElement).disabled = true;
+      sendBtn!.textContent = 'Sending...';
+      responseEl!.style.display = 'block';
+      responseBody!.textContent = 'Loading...';
+
+      const start = performance.now();
+      try {
+        const res = await fetch(urlEl!.value, {
+          method,
+          headers: {
+            'X-Server-API-Key': key,
+            'Content-Type': 'application/json',
+          },
+          body: method !== 'GET' ? bodyEl?.value : undefined,
+        });
+        const elapsed = Math.round(performance.now() - start);
+        const data = await res.text();
+        let formatted = data;
+        try { formatted = JSON.stringify(JSON.parse(data), null, 2); } catch {}
+
+        responseStatus!.textContent = `${res.status} ${res.statusText}`;
+        responseStatus!.className = `ap-response-status ${res.ok ? 'ok' : 'err'}`;
+        responseTime!.textContent = `${elapsed}ms`;
+        responseBody!.textContent = formatted;
+      } catch (err: any) {
+        responseStatus!.textContent = 'Error';
+        responseStatus!.className = 'ap-response-status err';
+        responseTime!.textContent = '';
+        responseBody!.textContent = err.message || 'Network error — CORS may block direct browser requests.\nUse the cURL tab to export and run from terminal.';
+      }
+      (sendBtn as HTMLButtonElement).disabled = false;
+      sendBtn!.textContent = 'Send';
+    });
+
+    // Save API key on change
+    apiKeyInput?.addEventListener('change', () => {
+      if (apiKeyInput.value) {
+        localStorage.setItem('venmail_docs_apikey', apiKeyInput.value);
+        setAuthed(true);
+      }
+    });
+
+    // Init cURL on first body change
+    bodyEl?.addEventListener('input', updateCurl);
+    updateCurl();
+  });
+</script>

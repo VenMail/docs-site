@@ -1,0 +1,101 @@
+---
+title: Send a Message
+description: Send an email via the Venmail REST API.
+---
+
+## POST /api/v1/send/message
+
+Send an email by providing structured parameters.
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-Server-API-Key` | Yes | Your API key |
+| `Content-Type` | Yes | `application/json` |
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `to` | `string[]` | Yes | Recipient email addresses (max 50) |
+| `from` | `string` | Yes | From address (must be authorized for your server) |
+| `subject` | `string` | No | Email subject line |
+| `html_body` | `string` | No | HTML body content |
+| `plain_body` | `string` | No | Plain text body content |
+| `cc` | `string[]` | No | CC recipients (max 50) |
+| `bcc` | `string[]` | No | BCC recipients (max 50) |
+| `sender` | `string` | No | Sender header (if different from `from`) |
+| `reply_to` | `string` | No | Reply-To address |
+| `tag` | `string` | No | Tag for categorization and webhook filtering |
+| `headers` | `object` | No | Custom headers as key-value pairs |
+| `attachments` | `array` | No | File attachments (see below) |
+| `bounce` | `boolean` | No | Whether this is a bounce message |
+
+### Attachments
+
+Each attachment is an object with:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | `string` | Filename (e.g., `invoice.pdf`) |
+| `content_type` | `string` | MIME type (e.g., `application/pdf`) |
+| `data` | `string` | Base64-encoded file content |
+
+### Example
+
+```bash
+curl -X POST https://m.venmail.io/api/v1/send/message \
+  -H "X-Server-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": ["alice@example.com"],
+    "cc": ["bob@example.com"],
+    "from": "billing@yourdomain.com",
+    "subject": "Invoice #1234",
+    "html_body": "<p>Please find your invoice attached.</p>",
+    "tag": "invoices",
+    "headers": {
+      "X-Invoice-ID": "1234"
+    },
+    "attachments": [
+      {
+        "name": "invoice.pdf",
+        "content_type": "application/pdf",
+        "data": "JVBERi0xLjQK..."
+      }
+    ]
+  }'
+```
+
+### Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "message_id": "msg_abc123@yourdomain.com",
+    "messages": {
+      "alice@example.com": { "id": 1001, "token": "abc123" },
+      "bob@example.com": { "id": 1002, "token": "def456" }
+    }
+  }
+}
+```
+
+### Errors
+
+| Error | Description |
+|-------|-------------|
+| `ValidationError` | Missing or invalid parameters |
+| `NoRecipients` | No valid recipients provided |
+| `NoContent` | Neither `html_body` nor `plain_body` provided |
+| `TooManyToAddresses` | More than 50 To addresses |
+| `FromAddressMissing` | `from` parameter not provided |
+| `UnauthenticatedFromAddress` | From address not authorized for this server |
+
+## Try it
+
+import ApiPlayground from '../../../components/ApiPlayground.astro';
+
+<ApiPlayground method="POST" endpoint="/api/v1/send/message" />

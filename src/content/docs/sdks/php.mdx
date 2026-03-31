@@ -1,0 +1,116 @@
+---
+title: PHP SDK
+description: Official Venmail VVS-1 SDK for PHP.
+---
+
+## Installation
+
+```bash
+composer require venmail/vvs
+```
+
+Requires PHP 8.1+ with the `sodium` extension (built-in since PHP 7.2).
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| VVS-1 signing | Ed25519 message signing via libsodium |
+| VVS-1 verification | Full verification pipeline |
+| Key management | Keypair generation |
+| Key resolution | Well-known, DNS, and embedded key lookup |
+| Laravel helper | Route registration for well-known endpoint |
+| DNS helper | Generate TXT record values |
+
+## Signing messages
+
+```php
+use Venmail\VVS\KeyGenerator;
+use Venmail\VVS\Signer;
+
+// Generate keypair (once, store securely)
+$keyPair = KeyGenerator::generate();
+echo $keyPair->publicKeyBase64url; // Publish this
+
+// Sign a message
+$result = Signer::signMessage(
+    '<p>Invoice #8821</p>',
+    [
+        'from' => 'billing@company.com',
+        'to' => 'vendor@external.com',
+        'subject' => 'Invoice #8821',
+        'date' => gmdate('D, d M Y H:i:s +0000'),
+    ],
+    [
+        'agentId' => 'billing@company.com',
+        'privateKey' => $keyPair->privateKey,
+        'verifyMethods' => ['well-known', 'dns'],
+        'keyVersion' => 1,
+    ]
+);
+
+// $result->headers contains all X-Venmail-* headers
+// Pass as custom headers when sending via Venmail API
+```
+
+## Verifying messages
+
+```php
+use Venmail\VVS\Verifier;
+
+$result = Verifier::verifyMessage(
+    $incomingHeaders,  // associative array of X-Venmail-* headers
+    $emailBody,
+    ['from' => '...', 'to' => '...', 'subject' => '...', 'date' => '...']
+);
+
+echo $result->trustLevel; // VERIFIED, PARTIAL, FAILED, or UNKNOWN
+echo $result->agentId;    // billing@company.com
+echo $result->error;      // null or failure reason
+```
+
+## Laravel well-known route
+
+```php
+// In routes/web.php
+use Venmail\VVS\Helpers\WellKnownRoute;
+
+WellKnownRoute::laravelRoute(function (string $agentName) {
+    $key = VvsAgentKey::where('agent_name', $agentName)
+        ->where('status', 'active')
+        ->latest('key_version')
+        ->first();
+
+    if (!$key) return null;
+
+    return [
+        'agent_id' => "{$agentName}@" . config('app.domain'),
+        'public_key' => $key->public_key_base64url,
+        'key_version' => $key->key_version,
+        'status' => 'active',
+        'algorithm' => 'ed25519',
+    ];
+})();
+```
+
+## DNS record generation
+
+```php
+use Venmail\VVS\Helpers\DnsRecordGenerator;
+
+$record = DnsRecordGenerator::generate('billing', $keyPair->publicKeyBase64url, 1);
+// "v=VVS1; agent=billing; pubkey=...; kv=1; status=active"
+```
+
+## Canonicalization
+
+For advanced use cases, the canonicalization functions are available directly:
+
+```php
+use Venmail\VVS\Canonicalizer;
+
+$canonBody = Canonicalizer::canonicalizeBody($rawBody);
+$canonHeaders = Canonicalizer::canonicalizeHeaders($from, $to, $subject, $date);
+$contentHash = Canonicalizer::computeContentHash($canonBody);
+$payload = Canonicalizer::buildCanonicalPayload($agentId, $ts, $nonce, $hash, $headers);
+```

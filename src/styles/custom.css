@@ -1,0 +1,229 @@
+/*
+ * Venmail brand theme for Starlight
+ * Brand primary: #FF5C39 (orange)
+ * Dark bg matches landing footer: #0B1624
+ *
+ * IMPORTANT: Starlight dark mode semantics (reversed from light):
+ *   white  = page bg (DARKEST surface)
+ *   black  = strongest text (LIGHTEST color)
+ *   gray-1 = headings, strong emphasis
+ *   gray-2 = DEFAULT BODY TEXT — must be very readable
+ *   gray-3 = secondary/muted text
+ *   gray-4 = borders, UI chrome
+ *   gray-5 = card/surface backgrounds
+ *   gray-6 = nav/sidebar backgrounds
+ *
+ * The most critical for contrast: gray-2 on white (body text on page bg)
+ */
+
+/* ── Light mode ──────────────────────────────── */
+:root {
+  --sl-color-accent-low: #fff1ec;
+  --sl-color-accent: #d4431e;
+  --sl-color-accent-high: #7c2512;
+
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #f4f4f5;
+  --sl-color-gray-2: #b0b3ba;
+  --sl-color-gray-3: #7c7f88;
+  --sl-color-gray-4: #53565e;
+  --sl-color-gray-5: #2d3039;
+  --sl-color-gray-6: #1d2028;
+  --sl-color-gray-7: #fafafa;
+  --sl-color-black: #12141c;
+
+  --sl-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Dark mode — maximum readability ─────────── */
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #321a10;
+  --sl-color-accent: #ff8c6b;
+  --sl-color-accent-high: #ffe0d4;
+
+  --sl-color-white: #0c1219;
+  --sl-color-gray-1: #eef0f6;
+  --sl-color-gray-2: #d0d4de;
+  --sl-color-gray-3: #9299a8;
+  --sl-color-gray-4: #4d5568;
+  --sl-color-gray-5: #1c2333;
+  --sl-color-gray-6: #131926;
+  --sl-color-black: #f5f7fb;
+}
+
+/* ── Force high-contrast text everywhere in dark mode ── */
+:root[data-theme='dark'] {
+  --sl-color-text: #d0d4de;
+  --sl-color-text-accent: #ffe0d4;
+}
+
+/* Headings should be near-white */
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2,
+:root[data-theme='dark'] h3,
+:root[data-theme='dark'] h4 {
+  color: #f5f7fb !important;
+}
+
+/* Body paragraphs, list items — bright enough to read easily */
+:root[data-theme='dark'] .sl-markdown-content p,
+:root[data-theme='dark'] .sl-markdown-content li,
+:root[data-theme='dark'] .sl-markdown-content td,
+:root[data-theme='dark'] .sl-markdown-content dd {
+  color: #d0d4de;
+}
+
+/* Sidebar nav items */
+:root[data-theme='dark'] nav.sidebar-content a,
+:root[data-theme='dark'] [data-scope="sidebar"] a {
+  color: #b8bcc8;
+}
+:root[data-theme='dark'] nav a[aria-current='page'],
+:root[data-theme='dark'] [data-scope="sidebar"] a[aria-current='page'] {
+  color: #ffe0d4 !important;
+  font-weight: 600;
+}
+
+/* Sidebar group headings */
+:root[data-theme='dark'] .sidebar-content summary,
+:root[data-theme='dark'] [data-scope="sidebar"] summary {
+  color: #eef0f6;
+}
+
+/* ── Hero buttons ────────────────────────────── */
+.hero .action.primary {
+  background: #FF5C39 !important;
+  border-color: #FF5C39 !important;
+  color: #fff !important;
+}
+.hero .action.primary:hover {
+  background: #e04b28 !important;
+  border-color: #e04b28 !important;
+}
+/* Hero tagline */
+:root[data-theme='dark'] .hero .tagline {
+  color: #d0d4de !important;
+}
+
+/* ── Links should be bright and obvious ──────── */
+:root[data-theme='dark'] .sl-markdown-content a:not(.action) {
+  color: #ff8c6b;
+}
+:root[data-theme='dark'] .sl-markdown-content a:not(.action):hover {
+  color: #ffb89e;
+}
+
+/* ── Code blocks ─────────────────────────────── */
+:root[data-theme='dark'] .expressive-code pre {
+  background: #0f1724 !important;
+}
+:root[data-theme='dark'] .expressive-code .frame {
+  border-color: #2a3348 !important;
+}
+
+/* ── Inline code ─────────────────────────────── */
+:root[data-theme='dark'] :not(pre) > code {
+  background: #1c2333;
+  color: #eef0f6;
+  padding: 0.125em 0.3em;
+  border-radius: 0.25em;
+}
+
+/* ── Tables ──────────────────────────────────── */
+:root[data-theme='dark'] table th {
+  color: #f5f7fb;
+  background: #1c2333;
+  font-weight: 600;
+}
+:root[data-theme='dark'] table td {
+  color: #d0d4de;
+}
+:root[data-theme='dark'] table tr {
+  border-color: #2a3348;
+}
+:root[data-theme='dark'] table tr:nth-child(2n) {
+  background: rgba(28, 35, 51, 0.5);
+}
+
+/* ── Cards ───────────────────────────────────── */
+:root[data-theme='dark'] .card {
+  border-color: #2a3348;
+  background: #131926;
+}
+:root[data-theme='dark'] .card:hover {
+  border-color: #ff8c6b;
+}
+:root[data-theme='dark'] .card .card__title {
+  color: #f5f7fb;
+}
+:root[data-theme='dark'] .card .card__body {
+  color: #b8bcc8;
+}
+
+/* ── Aside/callout boxes ─────────────────────── */
+:root[data-theme='dark'] .starlight-aside {
+  border-color: #2a3348;
+  background: rgba(28, 35, 51, 0.6);
+}
+:root[data-theme='dark'] .starlight-aside .starlight-aside__title {
+  color: #f5f7fb;
+}
+:root[data-theme='dark'] .starlight-aside p {
+  color: #d0d4de;
+}
+
+/* ── Footer/pagination links ─────────────────── */
+:root[data-theme='dark'] .pagination-links a {
+  border-color: #2a3348;
+  color: #d0d4de;
+}
+:root[data-theme='dark'] .pagination-links a:hover {
+  border-color: #ff8c6b;
+  color: #f5f7fb;
+}
+
+/* ── Search dialog ───────────────────────────── */
+:root[data-theme='dark'] dialog {
+  background: #131926;
+  color: #d0d4de;
+}
+
+/* ── Tabs ────────────────────────────────────── */
+:root[data-theme='dark'] starlight-tabs [role="tab"] {
+  color: #9299a8;
+}
+:root[data-theme='dark'] starlight-tabs [role="tab"][aria-selected="true"] {
+  color: #ffe0d4;
+  border-color: #ff8c6b;
+}
+
+/* ── Steps ───────────────────────────────────── */
+:root[data-theme='dark'] .sl-steps > li::before {
+  background: #ff8c6b;
+  color: #0c1219;
+}
+
+/* ── Header/top nav ──────────────────────────── */
+:root[data-theme='dark'] header.header {
+  border-color: #1c2333;
+}
+
+/* ── API endpoint badges ─────────────────────── */
+.sl-markdown-content .http-method {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+.http-post { background: #dbeafe; color: #1d4ed8; }
+.http-get { background: #dcfce7; color: #16a34a; }
+.http-put { background: #fef3c7; color: #d97706; }
+.http-delete { background: #fee2e2; color: #dc2626; }
+
+:root[data-theme='dark'] .http-post { background: #1e3a5f; color: #93c5fd; }
+:root[data-theme='dark'] .http-get { background: #14532d; color: #86efac; }
+:root[data-theme='dark'] .http-put { background: #451a03; color: #fcd34d; }
+:root[data-theme='dark'] .http-delete { background: #450a0a; color: #fca5a5; }

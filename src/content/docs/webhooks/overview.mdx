@@ -1,0 +1,52 @@
+---
+title: Webhooks Overview
+description: Receive real-time email events via HTTP webhooks.
+---
+
+## How webhooks work
+
+Venmail sends HTTP POST requests to your configured endpoint when email events occur (delivery, bounce, open, click, etc.).
+
+## Setup
+
+1. In the Venmail dashboard, go to **Settings > Integrations**
+2. Create a new webhook integration
+3. Enter your endpoint URL
+4. Select the events you want to receive
+5. Copy the webhook secret for signature verification
+
+## Payload format
+
+```json
+{
+  "event": "MessageDelivered",
+  "timestamp": 1743339600,
+  "payload": {
+    "id": 1234,
+    "token": "abc123",
+    "server_id": 1,
+    "rcpt_to": "user@example.com",
+    "mail_from": "sender@yourdomain.com",
+    "subject": "Welcome!",
+    "message_id": "msg_abc123@yourdomain.com",
+    "timestamp": 1743339600,
+    "status": "Sent",
+    "details": "Message delivered to remote server"
+  }
+}
+```
+
+## Delivery guarantees
+
+- Webhooks are delivered at least once
+- Your endpoint should return `2xx` within 5 seconds
+- Failed deliveries are retried with exponential backoff
+- Duplicate detection: use the message `token` as an idempotency key
+
+## Supported events
+
+See [Event Types](/webhooks/events/) for the full list.
+
+## Security
+
+All webhook payloads include a signature header for verification. See [Signature Verification](/webhooks/security/).

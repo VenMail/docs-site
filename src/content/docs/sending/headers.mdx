@@ -1,0 +1,51 @@
+---
+title: Custom Headers
+description: Add custom headers to outgoing messages.
+---
+
+## Custom headers
+
+Pass custom headers as a key-value object in the `headers` parameter when sending a message.
+
+```json
+{
+  "to": ["user@example.com"],
+  "from": "app@yourdomain.com",
+  "subject": "Order confirmation",
+  "html_body": "<p>Your order has been confirmed.</p>",
+  "headers": {
+    "X-Order-ID": "ord_12345",
+    "X-Customer-ID": "cust_67890",
+    "List-Unsubscribe": "<mailto:unsub@yourdomain.com>"
+  }
+}
+```
+
+## Venmail system headers
+
+These headers are automatically added by Venmail during processing:
+
+| Header | Description |
+|--------|-------------|
+| `X-Venmail-MsgID` | Unique message token for tracking |
+| `X-Venmail-Spam` | `yes` or `no` — spam classification result |
+| `X-Venmail-Spam-Score` | Numeric spam score |
+| `X-Venmail-Spam-Threshold` | Threshold used for classification |
+| `X-Venmail-Threat` | `yes` or `no` — threat detection result |
+| `DKIM-Signature` | DKIM signature (auto-generated) |
+
+## VVS-1 headers
+
+When [VVS-1 signing](/vvs/signing/) is enabled, these headers are added automatically:
+
+| Header | Description |
+|--------|-------------|
+| `X-Venmail-Agent` | Agent identity (`name@domain`) |
+| `X-Venmail-Signature` | Ed25519 signature (base64url) |
+| `X-Venmail-Algorithm` | Always `ed25519` |
+| `X-Venmail-Timestamp` | Unix timestamp of signing |
+| `X-Venmail-Nonce` | Random 16-byte hex string |
+| `X-Venmail-Content-Hash` | `sha256=` body hash (base64url) |
+| `X-Venmail-Verify-Method` | Ordered verification methods |
+
+See the [VVS-1 Header Reference](/vvs/reference/) for full details.

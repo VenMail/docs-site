@@ -1,0 +1,87 @@
+---
+title: Signature Verification
+description: Verify the authenticity of Venmail webhook payloads.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+## Why verify?
+
+Webhook payloads are sent over HTTP. Without verification, an attacker could forge requests to your endpoint. Always verify the signature before processing.
+
+## HMAC-SHA256 signature
+
+Venmail signs each webhook payload with your webhook secret using HMAC-SHA256. The signature is included in the `X-Venmail-Signature` header.
+
+## Verification
+
+<Tabs>
+  <TabItem label="Node.js (SDK)">
+  ```javascript
+  import { venmailIntegrationWebhook } from '@venmail/vsm';
+
+  // Drop-in Express middleware — handles verification automatically
+  app.post('/webhooks/venmail', venmailIntegrationWebhook({
+    secret: process.env.VENMAIL_WEBHOOK_SECRET,
+    onEvent: (event) => {
+      console.log('Event:', event.event, event.payload);
+    },
+  }));
+  ```
+  </TabItem>
+  <TabItem label="Node.js (manual)">
+  ```javascript
+  import { verifyVenmailSignature } from '@venmail/vsm';
+  import express from 'express';
+
+  app.post('/webhooks/venmail',
+    express.raw({ type: 'application/json' }),
+    (req, res) => {
+      const signature = req.headers['x-venmail-signature'];
+      const isValid = verifyVenmailSignature(
+        req.body,  // raw Buffer
+        signature,
+        process.env.VENMAIL_WEBHOOK_SECRET
+      );
+
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+
+      const event = JSON.parse(req.body);
+      // Process event...
+      res.json({ ok: true });
+    }
+  );
+  ```
+  </TabItem>
+  <TabItem label="PHP">
+  ```php
+  $payload = file_get_contents('php://input');
+  $signature = $_SERVER['HTTP_X_VENMAIL_SIGNATURE'] ?? '';
+  $secret = env('VENMAIL_WEBHOOK_SECRET');
+
+  $expected = hash_hmac('sha256', $payload, $secret);
+
+  if (!hash_equals($expected, $signature)) {
+      http_response_code(401);
+      echo json_encode(['error' => 'Invalid signature']);
+      exit;
+  }
+
+  $event = json_decode($payload, true);
+  // Process event...
+  ```
+  </TabItem>
+</Tabs>
+
+<Aside type="caution">
+Always use constant-time comparison (`hash_equals` in PHP, `crypto.timingSafeEqual` in Node) to prevent timing attacks.
+</Aside>
+
+## Rotating webhook secrets
+
+1. Go to **Settings > Integrations**
+2. Click **Rotate Secret** on your webhook
+3. Update your application with the new secret
+4. Old signatures will immediately become invalid

@@ -1,0 +1,112 @@
+---
+title: Verifying Messages
+description: How to verify incoming VVS-1 signed messages.
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Automatic verification (Venmail)
+
+Venmail automatically verifies VVS-1 headers on all incoming mail. The trust level is:
+- Stored in the mail database
+- Surfaced in the inbox UI as a trust badge
+- Available via the mail API in the `vvs_trust` field
+
+No code needed for Venmail users.
+
+## Manual verification
+
+If you're building your own receiver, use the SDK:
+
+<Tabs>
+  <TabItem label="Node.js">
+  ```javascript
+  import { vvs } from '@venmail/vsm';
+
+  const result = await vvs.verifyMessage(
+    {
+      'X-Venmail-Agent': 'billing@company.com',
+      'X-Venmail-Signature': 'abc123...',
+      'X-Venmail-Algorithm': 'ed25519',
+      'X-Venmail-Timestamp': '1743339600',
+      'X-Venmail-Nonce': 'a1b2c3d4e5f6...',
+      'X-Venmail-Content-Hash': 'sha256=...',
+      'X-Venmail-Verify-Method': 'well-known,dns',
+    },
+    emailBody,
+    { from: 'billing@company.com', to: 'me@example.com', subject: '...', date: '...' },
+    { timestampWindow: 3600 }
+  );
+
+  console.log(result.trustLevel); // 'VERIFIED' | 'PARTIAL' | 'FAILED' | 'UNKNOWN'
+  console.log(result.agentId);    // 'billing@company.com'
+  ```
+  </TabItem>
+  <TabItem label="PHP">
+  ```php
+  use Venmail\VVS\Verifier;
+
+  $result = Verifier::verifyMessage(
+      $vvsHeaders,
+      $emailBody,
+      ['from' => '...', 'to' => '...', 'subject' => '...', 'date' => '...']
+  );
+
+  echo $result->trustLevel; // VERIFIED, PARTIAL, FAILED, or UNKNOWN
+  echo $result->agentId;
+  ```
+  </TabItem>
+</Tabs>
+
+## Verification algorithm
+
+<Steps>
+
+1. **Extract headers** — If no `X-Venmail-*` headers present, return `UNKNOWN`
+
+2. **Validate timestamp** — Must be within the replay window (default: 3600 seconds)
+
+3. **Check nonce** — If nonce store available, reject duplicates
+
+4. **Verify content hash** — Recompute `sha256(canonicalized_body)` and compare with `X-Venmail-Content-Hash`
+
+5. **Resolve public key** — Try each method in `X-Venmail-Verify-Method` order:
+   - `well-known`: HTTPS GET to `/.well-known/venmail-agent/{name}`
+   - `dns`: TXT record on `_venmail.{domain}`
+   - `embedded`: Use `X-Venmail-Public-Key` header
+
+6. **Verify signature** — Ed25519 verify against the canonical payload
+
+7. **Assign trust level**:
+   - Key from well-known or DNS → `VERIFIED`
+   - Key from embedded header only → `PARTIAL`
+   - Any failure → `FAILED`
+
+</Steps>
+
+## Verification endpoint (API)
+
+Venmail also provides a verification API:
+
+```bash
+curl -X POST https://m.venmail.io/api/v1/verify \
+  -H "X-Server-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "raw_message": "<full RFC2822 message>",
+    "agent_id": "billing@company.com"
+  }'
+```
+
+Response:
+```json
+{
+  "trust_level": "VERIFIED",
+  "resolution_method": "well-known",
+  "key_version": 1,
+  "body_integrity": true,
+  "timestamp_valid": true,
+  "nonce_fresh": true,
+  "agent_status": "active"
+}
+```

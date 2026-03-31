@@ -1,0 +1,109 @@
+---
+title: Signing Messages
+description: How to sign outgoing emails with VVS-1.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Automatic signing (Venmail MTA)
+
+When VVS-1 signing is enabled on your Venmail server, all outgoing messages are signed automatically. The MTA:
+
+1. Looks up the agent key for the sending domain
+2. Canonicalizes the body and headers
+3. Signs with Ed25519
+4. Adds VVS headers before DKIM signing (so DKIM covers them too)
+
+No code changes needed — just enable signing in your server config and register your agent key.
+
+## Client-side signing
+
+For higher security, you can sign messages yourself before sending via the API. This means Venmail never holds your private key.
+
+<Tabs>
+  <TabItem label="Node.js">
+  ```javascript
+  import { vvs } from '@venmail/vsm';
+
+  // Generate a keypair (do this once, store securely)
+  const keyPair = vvs.generateKeyPair();
+  console.log('Public key:', keyPair.publicKeyBase64url);
+  // Publish this at /.well-known/venmail-agent/billing
+
+  // Sign a message
+  const result = vvs.signMessage(
+    '<p>Please process invoice #8821</p>',
+    {
+      from: 'billing@company.com',
+      to: 'vendor@external.com',
+      subject: 'Invoice #8821',
+      date: new Date().toUTCString(),
+    },
+    {
+      agentId: 'billing@company.com',
+      privateKey: keyPair.privateKey,
+      verifyMethods: ['well-known', 'dns'],
+      keyVersion: 1,
+    }
+  );
+
+  // result.headers contains all X-Venmail-* headers
+  // Pass them as custom headers when sending
+  await fetch('https://m.venmail.io/api/v1/send/message', {
+    method: 'POST',
+    headers: {
+      'X-Server-API-Key': 'YOUR_API_KEY',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      to: ['vendor@external.com'],
+      from: 'billing@company.com',
+      subject: 'Invoice #8821',
+      html_body: '<p>Please process invoice #8821</p>',
+      headers: result.headers,
+    }),
+  });
+  ```
+  </TabItem>
+  <TabItem label="PHP">
+  ```php
+  use Venmail\VVS\KeyGenerator;
+  use Venmail\VVS\Signer;
+
+  // Generate keypair (once, store securely)
+  $keyPair = KeyGenerator::generate();
+  // Publish $keyPair->publicKeyBase64url at well-known endpoint
+
+  // Sign a message
+  $result = Signer::signMessage(
+      '<p>Please process invoice #8821</p>',
+      [
+          'from' => 'billing@company.com',
+          'to' => 'vendor@external.com',
+          'subject' => 'Invoice #8821',
+          'date' => gmdate('D, d M Y H:i:s +0000'),
+      ],
+      new \Venmail\VVS\SigningOptions(
+          agentId: 'billing@company.com',
+          privateKey: $keyPair->privateKey,
+          verifyMethods: ['well-known', 'dns'],
+          keyVersion: 1,
+      )
+  );
+
+  // Pass $result->headers as custom headers when sending
+  ```
+  </TabItem>
+</Tabs>
+
+## Canonical signing payload
+
+The payload signed is constructed as:
+
+```
+{agent_id}\n{timestamp}\n{nonce}\n{content_hash}\n{canonicalized_headers}\n
+```
+
+Where `canonicalized_headers` is built from the `from`, `to`, `subject`, and `date` headers — lowercased, trimmed, sorted alphabetically, joined with newlines.
+
+See the [Header Reference](/vvs/reference/) for the complete canonicalization algorithm.

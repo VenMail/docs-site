@@ -1,0 +1,69 @@
+---
+title: Routes API
+description: Manage message routing rules.
+---
+
+## POST /api/v1/routes/list
+
+List all routes configured for the authenticated server.
+
+### Response
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "uuid": "rte-abc-123",
+      "name": "Default Route",
+      "domain_id": 1,
+      "endpoint_id": 1,
+      "mode": "Endpoint",
+      "spam_mode": "Mark"
+    }
+  ]
+}
+```
+
+## POST /api/v1/routes/create
+
+Create a new routing rule.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | `string` | Yes | Route name |
+| `domain_id` | `integer` | Yes | Domain to match |
+| `endpoint_id` | `integer` | Yes | Destination endpoint |
+| `mode` | `string` | No | `Endpoint` (default), `Bounce`, `Hold`, `Reject` |
+| `spam_mode` | `string` | No | `Mark` (default), `Quarantine`, `Fail` |
+
+### Response
+
+Returns the created route record.
+
+## POST /api/v1/routes/update
+
+Update an existing route.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `integer` | Yes | Route ID |
+| `name` | `string` | No | Updated name |
+| `endpoint_id` | `integer` | No | Updated endpoint |
+| `mode` | `string` | No | Updated mode |
+| `spam_mode` | `string` | No | Updated spam handling |
+
+## POST /api/v1/routes/delete
+
+Delete a route.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `integer` | Yes | Route ID |

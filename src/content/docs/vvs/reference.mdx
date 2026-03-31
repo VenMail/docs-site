@@ -1,0 +1,116 @@
+---
+title: VVS-1 Header Reference
+description: Complete reference for all VVS-1 headers and canonicalization rules.
+---
+
+## Required headers
+
+All VVS-1 compliant outgoing messages MUST include:
+
+| Header | Format | Description |
+|--------|--------|-------------|
+| `X-Venmail-Agent` | `{name}@{domain}` | Agent identity (e.g., `billing_v1@company.com`) |
+| `X-Venmail-Signature` | base64url | Ed25519 signature of the canonical payload |
+| `X-Venmail-Algorithm` | `ed25519` | Signing algorithm |
+| `X-Venmail-Timestamp` | Unix seconds | Time of signing |
+| `X-Venmail-Nonce` | 32 hex chars | Cryptographically random 16-byte value |
+| `X-Venmail-Content-Hash` | `sha256={base64url}` | SHA-256 hash of canonicalized body |
+| `X-Venmail-Verify-Method` | comma-separated | Ordered resolution methods |
+
+## Optional headers
+
+| Header | Format | Description |
+|--------|--------|-------------|
+| `X-Venmail-Public-Key` | base64url | Ed25519 public key (bootstrapping only) |
+| `X-Venmail-Key-Version` | integer | Key version for rotation support |
+| `X-Venmail-Context` | string | Thread or workflow identifier |
+
+## Body canonicalization (section 4.1)
+
+Before hashing:
+
+1. Encode body as UTF-8
+2. Normalize all line endings to `\n` (LF)
+3. Strip trailing whitespace from each line
+4. Do **not** strip leading whitespace
+
+```
+content_hash = "sha256=" + base64url(sha256(normalized_body))
+```
+
+## Header canonicalization (section 4.2)
+
+Take these email header fields: `from`, `to`, `subject`, `date`
+
+1. Lowercase all field names
+2. Strip leading and trailing whitespace from values
+3. Fold multi-line values: replace `\r\n <whitespace>` with a single space
+4. Sort fields alphabetically by name
+5. Join as `{name}:{value}` separated by `\n`
+
+Example output:
+```
+date:Mon, 30 Mar 2026 12:00:00 +0000
+from:billing@company.com
+subject:Invoice #8821
+to:vendor@external.com
+```
+
+## Canonical signing payload (section 4.2)
+
+```
+canonical_payload =
+  agent_id + "\n" +
+  timestamp + "\n" +
+  nonce + "\n" +
+  content_hash + "\n" +
+  canonicalized_headers + "\n"
+```
+
+## Signature
+
+```
+signature = base64url(Ed25519_sign(canonical_payload, private_key))
+```
+
+## Key resolution methods
+
+### `well-known`
+
+```
+GET https://{domain}/.well-known/venmail-agent/{agent-name}
+```
+
+Response (`application/json`):
+```json
+{
+  "agent_id": "billing_v1@company.com",
+  "public_key": "<base64url Ed25519 public key>",
+  "key_version": 1,
+  "status": "active",
+  "valid_from": "2026-01-01T00:00:00Z",
+  "valid_until": null
+}
+```
+
+Status must be `active`. `revoked` or `suspended` results in `FAILED` immediately.
+
+### `dns`
+
+TXT record on `_venmail.{domain}`:
+```
+v=VVS1; agent={agent-name}; pubkey={base64url key}; kv={key-version}; status=active
+```
+
+### `embedded`
+
+Uses `X-Venmail-Public-Key` header value. Lowest trust — results in `PARTIAL`.
+
+## Replay protection
+
+- **Timestamp**: `abs(current_time - X-Venmail-Timestamp) <= 3600` seconds (default)
+- **Nonce**: Receivers SHOULD store observed nonces for the replay window duration and reject duplicates
+
+## Encoding
+
+All binary values (signatures, keys, hashes) use **base64url encoding without padding** (RFC 4648 section 5, no `=` padding characters).

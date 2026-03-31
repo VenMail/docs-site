@@ -1,0 +1,123 @@
+---
+// OAuth callback handler — exchanges code for token after Venmail login
+---
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connecting to Venmail...</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #0c1219;
+      color: #d0d4de;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+      padding: 2rem;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #1c2333;
+      border-top-color: #FF5C39;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h2 { color: #f5f7fb; font-size: 1.25rem; margin-bottom: 0.5rem; }
+    p { color: #9299a8; font-size: 0.875rem; }
+    .error { color: #ef4444; margin-top: 1rem; }
+    a { color: #ff8c6b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner" id="spinner"></div>
+    <h2 id="status">Connecting to Venmail...</h2>
+    <p id="detail">Securely exchanging credentials</p>
+    <div class="error" id="error" style="display:none"></div>
+  </div>
+
+  <script is:inline>
+    (async function() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const redirectPath = params.get('redirect') || localStorage.getItem('venmail_docs_redirect') || '/quickstart/';
+
+      if (!code) {
+        // No code — check for session cookie approach
+        document.getElementById('status').textContent = 'No authorization code received';
+        document.getElementById('detail').textContent = '';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').innerHTML = 'Please try <a href="/">logging in again</a>.';
+        document.getElementById('spinner').style.display = 'none';
+        return;
+      }
+
+      try {
+        // Exchange code for token via Venmail API
+        const res = await fetch('https://m.venmail.io/api/v1/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Auth-Init': code,
+          },
+          body: JSON.stringify({ code }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`Authentication failed (${res.status})`);
+        }
+
+        const data = await res.json();
+        const token = data.token || data.data?.token;
+
+        if (token) {
+          localStorage.setItem('venAuthToken', token);
+          // Store user info if available
+          if (data.user || data.data?.user) {
+            const user = data.user || data.data.user;
+            localStorage.setItem('venUserEmail', user.email || '');
+            localStorage.setItem('venUserFirstName', user.first_name || '');
+          }
+
+          document.getElementById('status').textContent = 'Authenticated!';
+          document.getElementById('detail').textContent = 'Now enter your API key...';
+
+          // Prompt for API key
+          setTimeout(() => {
+            const key = prompt(
+              'You\'re logged in! Enter your Venmail API key to use in the API playground.\n\n' +
+              'Find it in Settings > API Keys at m.venmail.io'
+            );
+            if (key && key.trim()) {
+              localStorage.setItem('venmail_docs_apikey', key.trim());
+            }
+            // Redirect back to the page they came from
+            localStorage.removeItem('venmail_docs_redirect');
+            window.location.href = redirectPath;
+          }, 300);
+        } else {
+          throw new Error('No token in response');
+        }
+      } catch (err) {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('status').textContent = 'Authentication failed';
+        document.getElementById('detail').textContent = '';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').innerHTML =
+          err.message + '<br><br>You can still use the API playground by entering your API key manually. ' +
+          '<a href="' + redirectPath + '">Go back</a>';
+      }
+    })();
+  </script>
+</body>
+</html>

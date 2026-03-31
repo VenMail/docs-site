@@ -1,0 +1,110 @@
+---
+title: Quickstart
+description: Send your first email with Venmail in under 5 minutes.
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Send your first email
+
+<Steps>
+
+1. **Get your API key**
+
+   Log in to the [Venmail dashboard](https://m.venmail.io) and navigate to **Settings > API Keys**. Click **Create API Key**, give it a name, and copy the key. You'll only see it once.
+
+2. **Verify your domain**
+
+   Go to **Settings > Domains** and add your sending domain. Add the DNS records shown (SPF, DKIM, return path). See [Domain Setup](/domains/setup/) for details.
+
+3. **Send a test email**
+
+   <Tabs>
+     <TabItem label="curl">
+     ```bash
+     curl -X POST https://m.venmail.io/api/v1/send/message \
+       -H "X-Server-API-Key: YOUR_API_KEY" \
+       -H "Content-Type: application/json" \
+       -d '{
+         "to": ["you@example.com"],
+         "from": "test@yourdomain.com",
+         "subject": "Hello from Venmail",
+         "html_body": "<h1>It works!</h1><p>Your first Venmail email.</p>"
+       }'
+     ```
+     </TabItem>
+     <TabItem label="Node.js">
+     ```javascript
+     import { venmailSend } from '@venmail/vsm';
+
+     // Or use fetch directly:
+     const res = await fetch('https://m.venmail.io/api/v1/send/message', {
+       method: 'POST',
+       headers: {
+         'X-Server-API-Key': 'YOUR_API_KEY',
+         'Content-Type': 'application/json',
+       },
+       body: JSON.stringify({
+         to: ['you@example.com'],
+         from: 'test@yourdomain.com',
+         subject: 'Hello from Venmail',
+         html_body: '<h1>It works!</h1>',
+       }),
+     });
+
+     console.log(await res.json());
+     ```
+     </TabItem>
+     <TabItem label="PHP">
+     ```php
+     $ch = curl_init('https://m.venmail.io/api/v1/send/message');
+     curl_setopt_array($ch, [
+         CURLOPT_POST => true,
+         CURLOPT_RETURNTRANSFER => true,
+         CURLOPT_HTTPHEADER => [
+             'X-Server-API-Key: YOUR_API_KEY',
+             'Content-Type: application/json',
+         ],
+         CURLOPT_POSTFIELDS => json_encode([
+             'to' => ['you@example.com'],
+             'from' => 'test@yourdomain.com',
+             'subject' => 'Hello from Venmail',
+             'html_body' => '<h1>It works!</h1>',
+         ]),
+     ]);
+
+     $response = curl_exec($ch);
+     echo $response;
+     ```
+     </TabItem>
+   </Tabs>
+
+4. **Check the response**
+
+   A successful response looks like:
+   ```json
+   {
+     "status": "success",
+     "data": {
+       "message_id": "msg_abc123@yourdomain.com",
+       "messages": {
+         "you@example.com": { "id": 1234, "token": "abcdef" }
+       }
+     }
+   }
+   ```
+
+</Steps>
+
+## Try it now
+
+import ApiPlayground from '../../components/ApiPlayground.astro';
+
+<ApiPlayground method="POST" endpoint="/api/v1/send/message" />
+
+## Next steps
+
+- [Send with custom headers](/sending/headers/) for tracking and routing
+- [Set up webhooks](/webhooks/overview/) for delivery events
+- [Enable VVS-1 signing](/vvs/signing/) for cryptographic message verification
+- Install the [Node.js](/sdks/node/) or [PHP](/sdks/php/) SDK

@@ -1,0 +1,82 @@
+---
+title: Event Types
+description: All webhook event types supported by Venmail.
+---
+
+## Delivery events
+
+| Event | Description |
+|-------|-------------|
+| `MessageSent` | Message accepted and queued for delivery |
+| `MessageDelivered` | Successfully delivered to recipient's mail server |
+| `MessageDelayed` | Delivery temporarily delayed (will retry) |
+| `MessageHeld` | Message held for review (e.g., credential reputation) |
+| `MessageDeliveryFailed` | Permanent delivery failure |
+| `MessageBounced` | Recipient server returned a bounce |
+
+## Engagement events
+
+| Event | Description |
+|-------|-------------|
+| `MessageOpened` | Recipient opened the email (via tracking pixel) |
+| `MessageLinkClicked` | Recipient clicked a tracked link |
+
+## Lifecycle events
+
+| Event | Description |
+|-------|-------------|
+| `DomainDNSError` | DNS configuration issue detected for a domain |
+| `CredentialLocked` | SMTP/API credential suspended (reputation issue) |
+| `CredentialUnlocked` | Credential restored after reputation reset |
+
+## Event payload structure
+
+All events share a common structure:
+
+```json
+{
+  "event": "MessageDelivered",
+  "timestamp": 1743339600,
+  "uuid": "evt_abc123",
+  "payload": {
+    // Event-specific data
+  }
+}
+```
+
+### MessageDelivered / MessageSent payload
+
+```json
+{
+  "id": 1234,
+  "token": "abc123",
+  "server_id": 1,
+  "rcpt_to": "user@example.com",
+  "mail_from": "sender@yourdomain.com",
+  "subject": "Welcome!",
+  "message_id": "msg_abc123@yourdomain.com",
+  "timestamp": 1743339600,
+  "status": "Sent",
+  "details": "Message delivered to remote server",
+  "output": "250 2.0.0 OK"
+}
+```
+
+### MessageBounced payload
+
+```json
+{
+  "id": 1234,
+  "token": "abc123",
+  "rcpt_to": "invalid@example.com",
+  "mail_from": "sender@yourdomain.com",
+  "subject": "Welcome!",
+  "bounce_type": "hard",
+  "bounce_code": "550",
+  "bounce_message": "5.1.1 User unknown"
+}
+```
+
+## Filtering events
+
+When configuring a webhook, you can subscribe to specific events. Only selected events will be delivered to your endpoint.

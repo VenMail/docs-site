@@ -1,0 +1,60 @@
+---
+title: Trust Levels
+description: Understanding VVS-1 trust level assignments.
+---
+
+## Trust levels
+
+Every incoming email is assigned one of four trust levels based on VVS-1 verification:
+
+| Level | Badge | Meaning |
+|-------|-------|---------|
+| **VERIFIED** | ✓ Green shield | Signature valid, key resolved via `.well-known` or DNS |
+| **PARTIAL** | ~ Amber shield | Signature valid, but key resolved via embedded header only |
+| **FAILED** | ✗ Red shield | Headers present but verification failed |
+| **UNKNOWN** | _(none)_ | No VVS headers present — normal email |
+
+## VERIFIED
+
+The highest trust level. The message:
+- Contains valid VVS-1 headers
+- Has a body hash that matches the content
+- Has a valid Ed25519 signature
+- Has a public key resolved from the sender's domain (`.well-known` or DNS)
+
+This proves the agent identity is controlled by the domain owner.
+
+## PARTIAL
+
+The signature is cryptographically valid, but the public key came from the email header itself (`X-Venmail-Public-Key`). This means:
+- The message hasn't been tampered with since signing
+- But the key's ownership hasn't been independently verified
+
+Use case: new agents whose `.well-known` or DNS records aren't yet propagated.
+
+## FAILED
+
+VVS headers are present, but verification failed. Specific reasons include:
+- **Body tampered** — content hash doesn't match
+- **Signature invalid** — Ed25519 verification failed
+- **Replay detected** — timestamp outside window or duplicate nonce
+- **Agent revoked** — key status is `revoked` or `suspended`
+- **Malformed headers** — required fields missing or invalid
+
+The specific failure reason is available in the `error` field.
+
+## UNKNOWN
+
+No `X-Venmail-Agent` header found. This is a normal email without VVS-1 signing. It is delivered and processed normally — VVS-1 never blocks delivery.
+
+## UI representation
+
+In the Venmail inbox, trust levels are shown as inline badges:
+- **VERIFIED**: Green badge with shield checkmark next to sender name
+- **PARTIAL**: Amber badge with shield alert icon
+- **FAILED**: Red badge with shield X icon — hover to see failure reason
+- **UNKNOWN**: No badge shown
+
+## Separate from risk scoring
+
+Trust levels are **not** risk scores. VVS-1 trust is a cryptographic verification result. Behavioral risk scoring (sender reputation, content analysis, anomaly detection) is a separate system that may use VVS trust as one input signal. These are always surfaced separately in the UI.

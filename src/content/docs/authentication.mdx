@@ -1,0 +1,51 @@
+---
+title: Authentication
+description: How to authenticate with the Venmail API.
+---
+
+## API Key Authentication
+
+All Venmail API requests require an API key passed via the `X-Server-API-Key` header.
+
+```bash
+curl -X POST https://m.venmail.io/api/v1/send/message \
+  -H "X-Server-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+```
+
+### Getting your API key
+
+1. Log in to the [Venmail dashboard](https://m.venmail.io)
+2. Go to **Settings > API Keys**
+3. Click **Create API Key**
+4. Copy the key immediately — it's only shown once
+
+### Key types
+
+| Type | Purpose |
+|------|---------|
+| **API** | REST API access for sending messages, managing domains, etc. |
+| **SMTP** | SMTP relay authentication for sending via SMTP protocol |
+
+### Security best practices
+
+- Store keys in environment variables, never in source code
+- Rotate keys regularly using the regenerate endpoint
+- Use separate keys for development and production
+- Revoke unused keys promptly
+
+### Master key
+
+Some administrative endpoints (server creation, IP pool management) require the `X-Master-Key` header instead. This key is configured at the server level and grants full access.
+
+```bash
+curl -X POST https://m.venmail.io/api/v1/server/create \
+  -H "X-Master-Key: YOUR_MASTER_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "production", "mode": "Live" }'
+```
+
+:::caution
+Never expose your master key in client-side code or public repositories.
+:::

@@ -1,0 +1,95 @@
+---
+title: Messages API
+description: API endpoints for managing messages.
+---
+
+## POST /api/v1/send/message
+
+Send a structured email message. See [Send a Message](/sending/send-message/) for full documentation.
+
+## POST /api/v1/send/raw
+
+Send a raw RFC2822 message. See [Send Raw](/sending/send-raw/) for full documentation.
+
+## POST /api/v1/messages/message
+
+Retrieve details about a specific message.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `integer` | Yes | Message ID |
+
+### Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 1234,
+    "token": "abc123",
+    "status": {
+      "status": "Sent",
+      "last_delivery_attempt": 1743339600,
+      "held": false,
+      "hold_expiry": null
+    },
+    "details": {
+      "rcpt_to": "user@example.com",
+      "mail_from": "sender@yourdomain.com",
+      "subject": "Welcome!",
+      "message_id": "msg_abc123@yourdomain.com",
+      "timestamp": 1743339600,
+      "direction": "outgoing",
+      "size": "2.4 KB",
+      "bounce": false,
+      "bounce_for_id": 0,
+      "tag": "welcome"
+    }
+  }
+}
+```
+
+## POST /api/v1/messages/deliveries
+
+Get delivery attempts for a message.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `integer` | Yes | Message ID |
+
+### Response
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 5678,
+      "status": "Sent",
+      "details": "Message delivered successfully",
+      "output": "250 2.0.0 OK",
+      "sent_with_ssl": true,
+      "log_id": "abcdef",
+      "timestamp": 1743339600
+    }
+  ]
+}
+```
+
+## POST /api/v1/messages/headers
+
+Get the full headers of a message.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `integer` | Yes | Message ID |
+
+### Response
+
+Returns the complete RFC2822 headers as a string, including any VVS-1 headers and DKIM signature.

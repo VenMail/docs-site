@@ -1,0 +1,121 @@
+---
+title: Node.js SDK
+description: Official Venmail SDK for Node.js and TypeScript.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Installation
+
+```bash
+npm install @venmail/vsm
+```
+
+Requires Node.js 18+. Zero runtime dependencies.
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| Webhook verification | HMAC-SHA256 signature validation |
+| Express middleware | Drop-in webhook handler |
+| VVS-1 signing | Ed25519 message signing |
+| VVS-1 verification | Full verification pipeline |
+| Key management | Keypair generation, import/export |
+| Key resolution | Well-known, DNS, and embedded key lookup |
+| Type detection | Discriminated union webhook type guards |
+| Event normalization | Consistent delivery event schema |
+
+## Webhook verification
+
+```javascript
+import { venmailIntegrationWebhook } from '@venmail/vsm';
+
+app.post('/webhooks/venmail', venmailIntegrationWebhook({
+  secret: process.env.VENMAIL_WEBHOOK_SECRET,
+  onEvent: (event) => {
+    switch (event.event) {
+      case 'MessageDelivered':
+        console.log('Delivered to:', event.payload.rcpt_to);
+        break;
+      case 'MessageBounced':
+        console.log('Bounced:', event.payload.bounce_message);
+        break;
+    }
+  },
+}));
+```
+
+## VVS-1 signing
+
+```javascript
+import { vvs } from '@venmail/vsm';
+
+// Generate keypair (once)
+const keyPair = vvs.generateKeyPair();
+
+// Sign a message
+const result = vvs.signMessage(
+  'Hello, world!',
+  { from: 'agent@example.com', to: 'user@test.com', subject: 'Hi', date: new Date().toUTCString() },
+  { agentId: 'agent@example.com', privateKey: keyPair.privateKey, verifyMethods: ['well-known'] }
+);
+
+// result.headers = { 'X-Venmail-Agent': '...', 'X-Venmail-Signature': '...', ... }
+```
+
+## VVS-1 verification
+
+```javascript
+import { vvs } from '@venmail/vsm';
+
+const result = await vvs.verifyMessage(
+  vvsHeaders,   // Record<string, string> of X-Venmail-* headers
+  emailBody,    // string
+  emailHeaders, // { from, to, subject, date }
+);
+
+console.log(result.trustLevel); // 'VERIFIED' | 'PARTIAL' | 'FAILED' | 'UNKNOWN'
+```
+
+## Well-known middleware
+
+Serve the `.well-known/venmail-agent` endpoint:
+
+```javascript
+import { venmailWellKnown } from '@venmail/vsm';
+
+app.use(venmailWellKnown(async (agentName) => {
+  const key = await db.getAgentKey(agentName);
+  if (!key) return null;
+  return {
+    agent_id: `${agentName}@yourdomain.com`,
+    public_key: key.publicKeyBase64url,
+    key_version: key.version,
+    status: 'active',
+    algorithm: 'ed25519',
+  };
+}));
+```
+
+## DNS record generation
+
+```javascript
+import { generateDnsRecord } from '@venmail/vsm';
+
+const record = generateDnsRecord('billing', keyPair.publicKeyBase64url, 1);
+// "v=VVS1; agent=billing; pubkey=...; kv=1; status=active"
+// Add as TXT record on _venmail.yourdomain.com
+```
+
+## TypeScript support
+
+Full TypeScript support with exported types:
+
+```typescript
+import type { VvsTrustLevel, VvsHeaders, VvsSignResult, VvsVerifyResult, VvsKeyPair } from '@venmail/vsm';
+```
+
+## API reference
+
+See the [GitHub repository](https://github.com/VenMail/venmail-vsm) for complete API documentation.
