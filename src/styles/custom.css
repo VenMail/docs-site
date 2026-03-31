@@ -2,45 +2,22 @@
  * Venmail brand theme for Starlight
  * Brand primary: #FF5C39 (orange)
  *
- * Starlight gray scale usage (BOTH modes):
- *   white  = page background
- *   black  = highest-contrast text (headings)
- *   gray-1 = lightest gray (subtle bg tints)
- *   gray-2 = body text (DEFAULT — must be highly readable!)
- *   gray-3 = secondary/muted text
- *   gray-4 = borders, dividers
- *   gray-5 = surfaces (cards, code bg)
- *   gray-6 = nav/sidebar bg
- *   gray-7 = subtle page bg tint
+ * Unlayered CSS beats @layer declarations, so these will override
+ * Starlight's @layer starlight.base defaults.
  *
- * LIGHT MODE: white=#fff, black=near-black, gray-2=dark readable text
- * DARK MODE:  white=dark bg, black=near-white, gray-2=light readable text
+ * Starlight INVERTS the gray scale between modes:
+ *   DARK:  white=darkest(bg), black=lightest(text), gray1=bright, gray6=dark-surface
+ *   LIGHT: white=darkest(text), black=lightest(bg), gray1=dark, gray6=light-surface
+ *
+ * Body text = --sl-color-text = var(--sl-color-gray-2)
+ * Page bg   = --sl-color-bg   = var(--sl-color-black)
  */
 
-/* ── Light mode ──────────────────────────────── */
-:root {
-  --sl-color-accent-low: #fff1ec;
-  --sl-color-accent: #c93d1a;
-  --sl-color-accent-high: #862910;
-
-  --sl-color-white: #ffffff;
-  --sl-color-gray-1: #f5f6f8;
-  --sl-color-gray-2: #3b3f4a;
-  --sl-color-gray-3: #585d6a;
-  --sl-color-gray-4: #b0b5c0;
-  --sl-color-gray-5: #e8eaee;
-  --sl-color-gray-6: #f0f1f4;
-  --sl-color-gray-7: #fafbfc;
-  --sl-color-black: #181b24;
-
-  --sl-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-/* ── Dark mode ───────────────────────────────── */
-:root[data-theme='dark'] {
+/* ── Dark mode colors ────────────────────────── */
+:root, ::backdrop {
   --sl-color-accent-low: #321a10;
   --sl-color-accent: #ff8c6b;
-  --sl-color-accent-high: #ffe0d4;
+  --sl-color-accent-high: #ffd5c5;
 
   --sl-color-white: #0c1219;
   --sl-color-gray-1: #eef0f6;
@@ -52,211 +29,48 @@
   --sl-color-black: #f5f7fb;
 }
 
-/* ── Hero ────────────────────────────────────── */
+/* ── Light mode colors (inverted per Starlight convention) ── */
+:root[data-theme='light'], [data-theme='light'] ::backdrop {
+  --sl-color-accent-low: #fff3ee;
+  --sl-color-accent: #c93d1a;
+  --sl-color-accent-high: #7c2512;
+
+  /* white = text color (dark), black = bg color (light) */
+  --sl-color-white: #1a1d27;
+  --sl-color-gray-1: #2b2f3a;
+  --sl-color-gray-2: #3b3f4a;
+  --sl-color-gray-3: #585d6a;
+  --sl-color-gray-4: #8e939f;
+  --sl-color-gray-5: #d0d3da;
+  --sl-color-gray-6: #eceef2;
+  --sl-color-gray-7: #f6f7f9;
+  --sl-color-black: #ffffff;
+
+  --sl-color-text-accent: var(--sl-color-accent);
+  --sl-color-text-invert: var(--sl-color-black);
+
+  /* Light mode surfaces */
+  --sl-color-bg-nav: var(--sl-color-gray-7);
+  --sl-color-bg-sidebar: var(--sl-color-black);
+  --sl-color-bg-inline-code: var(--sl-color-gray-6);
+  --sl-color-hairline-light: var(--sl-color-gray-6);
+  --sl-color-hairline-shade: var(--sl-color-gray-6);
+}
+
+/* ── Font ────────────────────────────────────── */
+:root {
+  --sl-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Hero primary button — brand orange on white ─ */
 .hero .action.primary {
   background: #FF5C39 !important;
   border-color: #FF5C39 !important;
   color: #fff !important;
 }
 .hero .action.primary:hover {
-  background: #e04b28 !important;
-  border-color: #e04b28 !important;
-}
-
-/* ── Light mode explicit overrides ───────────── */
-
-/* Body text must be dark and readable on white */
-:root:not([data-theme='dark']) .sl-markdown-content p,
-:root:not([data-theme='dark']) .sl-markdown-content li,
-:root:not([data-theme='dark']) .sl-markdown-content td,
-:root:not([data-theme='dark']) .sl-markdown-content dd,
-:root:not([data-theme='dark']) .sl-markdown-content dt {
-  color: #3b3f4a;
-}
-
-/* Light mode headings — near-black */
-:root:not([data-theme='dark']) h1,
-:root:not([data-theme='dark']) h2,
-:root:not([data-theme='dark']) h3,
-:root:not([data-theme='dark']) h4 {
-  color: #181b24 !important;
-}
-
-/* Light mode hero tagline */
-:root:not([data-theme='dark']) .hero .tagline {
-  color: #3b3f4a !important;
-}
-
-/* Light mode table text */
-:root:not([data-theme='dark']) table th {
-  color: #181b24;
-  background: #f0f1f4;
-}
-:root:not([data-theme='dark']) table td {
-  color: #3b3f4a;
-}
-
-/* Light mode sidebar */
-:root:not([data-theme='dark']) nav a {
-  color: #3b3f4a;
-}
-:root:not([data-theme='dark']) nav a[aria-current='page'] {
-  color: #c93d1a !important;
-  font-weight: 600;
-}
-
-/* Light mode secondary text (table of contents, descriptions) */
-:root:not([data-theme='dark']) .right-sidebar a,
-:root:not([data-theme='dark']) starlight-toc a {
-  color: #585d6a;
-}
-:root:not([data-theme='dark']) starlight-toc a[aria-current='true'] {
-  color: #c93d1a;
-}
-
-/* Light mode cards */
-:root:not([data-theme='dark']) .card {
-  border-color: #e0e2e8;
-}
-:root:not([data-theme='dark']) .card:hover {
-  border-color: #FF5C39;
-}
-
-/* Light mode pagination */
-:root:not([data-theme='dark']) .pagination-links a {
-  border-color: #e0e2e8;
-  color: #3b3f4a;
-}
-:root:not([data-theme='dark']) .pagination-links a .link-title {
-  color: #181b24;
-}
-
-/* ── Dark mode explicit overrides ────────────── */
-
-/* Headings near-white */
-:root[data-theme='dark'] h1,
-:root[data-theme='dark'] h2,
-:root[data-theme='dark'] h3,
-:root[data-theme='dark'] h4 {
-  color: #f5f7fb !important;
-}
-
-/* Body text bright */
-:root[data-theme='dark'] .sl-markdown-content p,
-:root[data-theme='dark'] .sl-markdown-content li,
-:root[data-theme='dark'] .sl-markdown-content td,
-:root[data-theme='dark'] .sl-markdown-content dd {
-  color: #cdd1dc;
-}
-
-/* Hero tagline */
-:root[data-theme='dark'] .hero .tagline {
-  color: #cdd1dc !important;
-}
-
-/* Links bright orange */
-:root[data-theme='dark'] .sl-markdown-content a:not(.action) {
-  color: #ff8c6b;
-}
-
-/* Sidebar */
-:root[data-theme='dark'] nav a {
-  color: #a8aebe;
-}
-:root[data-theme='dark'] nav a[aria-current='page'] {
-  color: #ffe0d4 !important;
-  font-weight: 600;
-}
-
-/* Code blocks */
-:root[data-theme='dark'] .expressive-code pre {
-  background: #0f1724 !important;
-}
-:root[data-theme='dark'] .expressive-code .frame {
-  border-color: #253045 !important;
-}
-
-/* Inline code */
-:root[data-theme='dark'] :not(pre) > code {
-  background: #192030;
-  color: #eef0f6;
-}
-:root:not([data-theme='dark']) :not(pre) > code {
-  background: #f0f1f4;
-  color: #3b3f4a;
-}
-
-/* Tables */
-:root[data-theme='dark'] table th {
-  color: #f5f7fb;
-  background: #192030;
-}
-:root[data-theme='dark'] table td {
-  color: #cdd1dc;
-}
-:root[data-theme='dark'] table tr {
-  border-color: #253045;
-}
-:root[data-theme='dark'] table tr:nth-child(2n) {
-  background: rgba(25, 32, 48, 0.5);
-}
-
-/* Cards */
-:root[data-theme='dark'] .card {
-  border-color: #253045;
-  background: #111828;
-}
-:root[data-theme='dark'] .card:hover {
-  border-color: #ff8c6b;
-}
-
-/* Asides */
-:root[data-theme='dark'] .starlight-aside {
-  border-color: #253045;
-}
-:root[data-theme='dark'] .starlight-aside .starlight-aside__title {
-  color: #f5f7fb;
-}
-:root[data-theme='dark'] .starlight-aside p {
-  color: #cdd1dc;
-}
-
-/* Pagination */
-:root[data-theme='dark'] .pagination-links a {
-  border-color: #253045;
-  color: #cdd1dc;
-}
-:root[data-theme='dark'] .pagination-links a:hover {
-  border-color: #ff8c6b;
-}
-:root[data-theme='dark'] .pagination-links a .link-title {
-  color: #f5f7fb;
-}
-
-/* Search */
-:root[data-theme='dark'] dialog {
-  background: #111828;
-  color: #cdd1dc;
-}
-
-/* Tabs */
-:root[data-theme='dark'] starlight-tabs [role="tab"] {
-  color: #8c93a4;
-}
-:root[data-theme='dark'] starlight-tabs [role="tab"][aria-selected="true"] {
-  color: #ffe0d4;
-  border-color: #ff8c6b;
-}
-
-/* Steps */
-:root[data-theme='dark'] .sl-steps > li::before {
-  background: #ff8c6b;
-  color: #0c1219;
-}
-
-/* Header */
-:root[data-theme='dark'] header.header {
-  border-color: #192030;
+  background: #d4431e !important;
+  border-color: #d4431e !important;
 }
 
 /* ── API endpoint badges ─────────────────────── */
@@ -273,8 +87,7 @@
 .http-get { background: #dcfce7; color: #16a34a; }
 .http-put { background: #fef3c7; color: #d97706; }
 .http-delete { background: #fee2e2; color: #dc2626; }
-
-:root[data-theme='dark'] .http-post { background: #1e3a5f; color: #93c5fd; }
-:root[data-theme='dark'] .http-get { background: #14532d; color: #86efac; }
-:root[data-theme='dark'] .http-put { background: #451a03; color: #fcd34d; }
-:root[data-theme='dark'] .http-delete { background: #450a0a; color: #fca5a5; }
+[data-theme='dark'] .http-post { background: #1e3a5f; color: #93c5fd; }
+[data-theme='dark'] .http-get { background: #14532d; color: #86efac; }
+[data-theme='dark'] .http-put { background: #451a03; color: #fcd34d; }
+[data-theme='dark'] .http-delete { background: #450a0a; color: #fca5a5; }
